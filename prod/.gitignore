@@ -1,0 +1,21 @@
+# .NET / Visual Studio
+[Bb]in/
+[Oo]bj/
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+*.cache
+*.vs/
+*.vscode/
+*.idea/
+packages/
+node_modules/
+
+# Ostatní
+*.log
+*.tmp
+Thumbs.db
+.DS_Store
