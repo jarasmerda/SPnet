@@ -26,7 +26,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "
 Write-Host ""
 Write-Host "=====================================================" -ForegroundColor Cyan
 Write-Host "  DEV prostředí spuštěno (ASPNETCORE_ENVIRONMENT=Development)" -ForegroundColor Cyan
-Write-Host "  Databáze: Smerco_05307970_2025" -ForegroundColor Cyan
-Write-Host "  CRM:      http://localhost:5127" -ForegroundColor Cyan
-Write-Host "  RestAPI1: http://localhost:5005" -ForegroundColor Cyan
+Write-Host "  Databáze: Smerco_05307970_2025_DEV" -ForegroundColor Cyan
+Write-Host "  CRM:      http://localhost:6127" -ForegroundColor Cyan
+Write-Host "  RestAPI1: http://localhost:6006" -ForegroundColor Cyan
 Write-Host "=====================================================" -ForegroundColor Cyan
