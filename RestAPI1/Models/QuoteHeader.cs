@@ -9,8 +9,12 @@ public class QuoteHeader
     public string? CustomerName { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime LastSaved { get; set; }
-    public DateTime? QuoteDate { get; set; }         // ← chybělo
-    public DateTime? ValidUntil { get; set; }        // ← chybělo
+    public DateTime? QuoteDate { get; set; }
+    public DateTime? ValidUntil { get; set; }
+    public DateTime? RequestDate { get; set; }
+    public string? Incoterms { get; set; }
+    public int? DeliveryWeeks { get; set; }
+    public string? PdfColor { get; set; }
     public string? PohodaOfferNumber { get; set; }
     public int? PohodaOfferInternalID { get; set; }
     public DateTime? PohodaImportDate { get; set; }

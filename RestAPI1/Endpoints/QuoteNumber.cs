@@ -93,6 +93,10 @@ namespace RestAPI1.Endpoints
                         customerName = quote.CustomerName ?? "",
                         date = quote.QuoteDate?.ToString("yyyy-MM-dd") ?? "",
                         validUntil = quote.ValidUntil?.ToString("yyyy-MM-dd") ?? "",
+                        requestDate = quote.RequestDate?.ToString("yyyy-MM-dd") ?? "",
+                        incoterms = quote.Incoterms ?? "",
+                        deliveryWeeks = quote.DeliveryWeeks?.ToString() ?? "",
+                        pdfColor = quote.PdfColor ?? "",
                         items
                     });
                 }
@@ -197,6 +201,26 @@ namespace RestAPI1.Endpoints
                 {
                     quote.ValidUntil = parsedValid;
                 }
+
+                if (jsonElement.TryGetProperty("requestDate", out var reqDateProp) &&
+                    reqDateProp.ValueKind != JsonValueKind.Null &&
+                    reqDateProp.GetString() is string reqDateStr &&
+                    DateTime.TryParse(reqDateStr, out var parsedReqDate))
+                {
+                    quote.RequestDate = parsedReqDate;
+                }
+
+                if (jsonElement.TryGetProperty("incoterms", out var incotermsProp) && incotermsProp.ValueKind != JsonValueKind.Null)
+                    quote.Incoterms = incotermsProp.GetString();
+
+                if (jsonElement.TryGetProperty("deliveryWeeks", out var dwProp) && dwProp.ValueKind != JsonValueKind.Null)
+                {
+                    var dwStr = dwProp.GetString() ?? "";
+                    quote.DeliveryWeeks = int.TryParse(dwStr, out var dw) ? dw : null;
+                }
+
+                if (jsonElement.TryGetProperty("pdfColor", out var colorProp) && colorProp.ValueKind != JsonValueKind.Null)
+                    quote.PdfColor = colorProp.GetString();
 
                 quote.LastSaved = DateTime.Now;
 

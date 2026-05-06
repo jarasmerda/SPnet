@@ -38,6 +38,10 @@ public class BomDb : DbContext
             entity.Property(e => e.LastSaved).HasColumnName("LastSaved");
             entity.Property(e => e.QuoteDate).HasColumnName("QuoteDate");
             entity.Property(e => e.ValidUntil).HasColumnName("ValidUntil");
+            entity.Property(e => e.RequestDate).HasColumnName("RequestDate");
+            entity.Property(e => e.Incoterms).HasColumnName("Incoterms");
+            entity.Property(e => e.DeliveryWeeks).HasColumnName("DeliveryWeeks");
+            entity.Property(e => e.PdfColor).HasColumnName("PdfColor");
             entity.Property(e => e.PohodaOfferNumber).HasColumnName("PohodaOfferNumber");
             entity.Property(e => e.PohodaOfferInternalID).HasColumnName("PohodaOfferInternalID");
             entity.Property(e => e.PohodaImportDate).HasColumnName("PohodaImportDate");

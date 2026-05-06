@@ -18,6 +18,43 @@
     th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
     th { background: #f8f9fa; }
     tr:hover { background: #f1f1f1; }
+    /* Tabulka položek: vstupy nesmí přetékat do sousedních sloupců */
+    #items-table {
+      table-layout: fixed;
+      width: 100%;
+    }
+    #items-table th,
+    #items-table td {
+      vertical-align: middle;
+      min-width: 0;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    #items-table thead th:nth-child(1) { width: 6%; }
+    #items-table thead th:nth-child(2) { width: 14%; }
+    #items-table thead th:nth-child(3) { width: 18%; }
+    #items-table thead th:nth-child(4) { width: 7%; }
+    #items-table thead th:nth-child(5) { width: 8%; }
+    #items-table thead th:nth-child(6) { width: 8%; }
+    #items-table thead th:nth-child(7) { width: 8%; }
+    #items-table thead th:nth-child(8) { width: 8%; }
+    #items-table thead th:nth-child(9) { width: 13%; }
+    #items-table thead th:nth-child(10) { width: 10%; }
+    #items-table input[type="number"] {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+    #items-table .remove-item,
+    #items-table .calc-single {
+      width: auto;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
     .add-item { background: #28a745; color: white; padding: 12px 20px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
     .remove-item { background: #dc3545; color: white; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; }
     .calc-single { background: #007bff; color: white; padding: 4px 8px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; }
@@ -43,19 +80,24 @@
     .nav .pdf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .readonly { pointer-events: none; opacity: 0.65; }
     #pdf-template { display: none; width: 210mm; background: white; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; line-height: 1.4; }
-    .pdf-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20mm; padding-bottom: 10mm; border-bottom: 2px solid #888; }
-    .pdf-logo { font-size: 20pt; font-weight: bold; color: #006400; }
-    .pdf-offer { font-size: 18pt; font-weight: bold; color: #b22222; }
-    .pdf-two-columns { display: flex; justify-content: space-between; margin-bottom: 15mm; }
+    .pdf-sp-badge { display: inline-block; background: #006400; color: white; font-weight: bold; font-size: 13pt; padding: 2px 7px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+    .pdf-company-name { font-size: 15pt; font-weight: bold; vertical-align: middle; }
+    .pdf-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7mm; padding-bottom: 4mm; border-bottom: 2px solid #333; }
+    .pdf-offer-title { font-size: 13pt; font-weight: bold; }
+    .pdf-section-label { color: #1a5276; font-weight: bold; font-size: 10pt; margin-bottom: 3px; }
+    .pdf-two-columns { display: flex; justify-content: space-between; margin-bottom: 7mm; }
     .pdf-column { width: 48%; }
-    .pdf-meta-table { width: 100%; margin-bottom: 15mm; }
-    .pdf-meta-table td:first-child { width: 140px; font-weight: bold; vertical-align: top; }
-    .pdf-products-table { width: 100%; border-collapse: collapse; margin-bottom: 12mm; }
-    .pdf-products-table th, .pdf-products-table td { border: 1px solid #777; padding: 6px 8px; }
-    .pdf-products-table th { background: #f4f4f4; text-align: center; font-weight: bold; }
+    .pdf-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 9mm; }
+    .pdf-meta-table td { padding: 2px 5px; vertical-align: top; }
+    .pdf-meta-table td:nth-child(1), .pdf-meta-table td:nth-child(3) { font-weight: bold; width: 120px; }
+    .pdf-products-table { width: 100%; border-collapse: collapse; margin-bottom: 9mm; }
+    .pdf-products-table th, .pdf-products-table td { border: 1px solid #999; padding: 5px 8px; }
+    .pdf-products-table th { background: #f0f0f0; text-align: center; font-weight: bold; font-size: 9pt; }
+    .pdf-products-table td:nth-child(2), .pdf-products-table td:nth-child(3) { text-align: center; }
     .pdf-products-table td:nth-child(4) { text-align: right; }
-    .pdf-notes { font-size: 9.5pt; margin-top: 20mm; border-top: 1px solid #888; padding-top: 10px; }
-    .pdf-footer { position: absolute; bottom: 8mm; left: 15mm; right: 15mm; font-size: 8.5pt; text-align: center; color: #555; border-top: 1px solid #ccc; padding-top: 6px; }
+    .pdf-notes { font-size: 9pt; margin-top: 7mm; color: #1a5276; line-height: 1.8; }
+    .pdf-footer { position: fixed; bottom: 0; left: 0; right: 0; padding-top: 5px; border-top: 1px solid #ccc; font-size: 8pt; text-align: center; color: #555; background: white; }
+    .pdf-missing { color: #cc0000; font-style: italic; }
   </style>
 </head>
 <body>
@@ -65,6 +107,7 @@
       <a href="/" target="_blank"></a>
       <a href="index.html" class="back-btn">← BACK TO QUOTES</a>
       <button class="pdf-btn" id="pdf-btn-nav" onclick="generatePDF()" disabled>CREATE QUOTE (PDF)</button>
+      <button id="revise-btn-nav" onclick="reviseQuote()" style="display:none; padding:8px 20px; font-size:16px; margin-left:20px; background:#fd7e14; color:white; border:none; border-radius:8px; cursor:pointer;">↩ CREATE REVISION</button>
       <strong></strong>
     </div>
   </div>
@@ -79,7 +122,11 @@
       <div><label>QUOTE #:</label><input type="text" id="quote-number" readonly></div>
       <div><label>CUSTOMER:</label><select id="customer"><option>Načítám...</option></select></div>
       <div><label>DATE:</label><input type="date" id="date"></div>
-      <div><label>VALID:</label><input type="date" id="valid-until"></div>
+      <div><label>VALID UNTIL:</label><input type="date" id="valid-until"></div>
+      <div><label>REQUEST DATE:</label><input type="date" id="request-date" onchange="autosave()"></div>
+      <div><label>INCOTERMS:</label><select id="incoterms" onchange="autosave()"><option value="">— načítám —</option></select></div>
+      <div><label>DELIVERY (weeks):</label><input type="number" id="delivery-weeks" min="1" max="52" placeholder="e.g. 6" onchange="autosave()"></div>
+      <div><label>COLOR (PDF notes):</label><input type="text" id="pdf-color" placeholder="e.g. Weiß / White" onchange="autosave()"></div>
     </div>
 
     <button class="add-item" id="add-item-btn" onclick="openCPQModal()">+ ADD SHEET ITEM (CONFIGURATOR)</button>
@@ -144,40 +191,73 @@
   <!-- PDF ŠABLONA -->
   <div id="pdf-template">
     <div class="pdf-inner">
+
+      <!-- HEADER -->
       <div class="pdf-header">
         <div>
-          <div class="pdf-logo">Staroplastic s.r.o.</div>
-          <div>Vídeňská 149/125a, 619 00 Brno</div>
-          <div>IČ: CZ05307970</div>
+          <span class="pdf-sp-badge">SP</span>
+          <span class="pdf-company-name">Staroplastic s.r.o.</span>
         </div>
-        <div class="pdf-offer">OFFER: <span id="pdf-offer-number"></span></div>
+        <div class="pdf-offer-title">OFFER: <span id="pdf-offer-number"></span></div>
       </div>
+
+      <!-- CUSTOMER + DELIVERY ADDRESS -->
       <div class="pdf-two-columns">
         <div class="pdf-column">
-          <strong>Customer:</strong><br><div id="pdf-customer-block"></div>
+          <div class="pdf-section-label">Customer:</div>
+          <div id="pdf-customer-block"></div>
         </div>
         <div class="pdf-column">
-          <strong>Delivery address:</strong><br><div id="pdf-delivery-block"></div>
+          <div class="pdf-section-label">Delivery address:</div>
+          <div id="pdf-delivery-block"></div>
         </div>
       </div>
+
+      <!-- META TABLE -->
       <table class="pdf-meta-table">
-        <tr><td>Offer date:</td><td id="pdf-offer-date"></td><td>Minimum qty:</td><td>1 ton/color/dimension,thickness</td></tr>
-        <tr><td>Offer number:</td><td id="pdf-offer-number-repeat"></td><td>Delivery:</td><td>in advance to confirm order</td></tr>
-        <tr><td>Incoterms:</td><td id="pdf-incoterms">FCA Brno</td><td>Payment:</td><td>in advance to confirm order</td></tr>
-        <tr><td>Valid:</td><td>7 days</td><td></td><td></td></tr>
+        <tr>
+          <td>Offer date:</td><td id="pdf-offer-date"></td>
+          <td>Minimum qty:</td><td>1 ton/color,dimension,thickness</td>
+        </tr>
+        <tr>
+          <td>Offer number:</td><td id="pdf-offer-number-repeat"></td>
+          <td>Delivery:</td><td id="pdf-delivery-terms"></td>
+        </tr>
+        <tr>
+          <td>Incoterms:</td><td id="pdf-incoterms"></td>
+          <td>Payment:</td><td>in advance to confirm order</td>
+        </tr>
+        <tr>
+          <td>Request date:</td><td id="pdf-request-date"></td>
+          <td>Valid:</td><td>7 days</td>
+        </tr>
       </table>
+
+      <!-- PRODUCTS TABLE -->
       <table class="pdf-products-table">
-        <thead><tr><th>Product</th><th>Dimension mm</th><th>Thickness mm</th><th>Price €/pc</th></tr></thead>
+        <thead>
+          <tr>
+            <th style="text-align:left;">Product</th>
+            <th>Dimension<br>mm</th>
+            <th>Thickness<br>mm</th>
+            <th>Price<br>€/sheet</th>
+          </tr>
+        </thead>
         <tbody id="pdf-products-tbody"></tbody>
       </table>
+
+      <!-- NOTES -->
       <div class="pdf-notes">
-        Minimum quantity order: 1.000 kg / 15 sheets per color<br>
-        Under minimum quantity order possible with price correction - minimum 5 sheets per color
+        <div id="pdf-notes-block"></div>
       </div>
+
+      <!-- FOOTER -->
       <div class="pdf-footer">
-        Staroplastic s.r.o. / Vídeňská 149/125a / 619 00 Brno / CZ05307970<br>
-        +420 770 682 077 / info@staroplastic.cz / www.staroplastic.cz
+        Staroplastic s.r.o. &nbsp;/&nbsp; Evropská 868 &nbsp;/&nbsp; 66442 Modřice &nbsp;/&nbsp; CZ05307970<br>
+        +420 770 682 077 &nbsp;/&nbsp; jj@staroplastic.cz &nbsp;/&nbsp; www.staroplastic.cz<br>
+        C 94637 registered in court Brno
       </div>
+
     </div>
   </div>
 
@@ -186,6 +266,7 @@
 
     let items = [];
     let selectedCustomerId = null;
+    let customerAddress = null; // načtená adresa z /CustomerAddress
     let currentStatus = 'IN PROGRESS';
     let quoteNumber = '';
     let isReadOnly = false;
@@ -199,6 +280,50 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     quoteNumber = urlParams.get('quote') || '';
+
+    async function loadIncoterms() {
+      const sel = document.getElementById('incoterms');
+      try {
+        const res = await fetch(`${BOM_API}/QuoteIncoterms`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const rows = await res.json();
+        sel.innerHTML = '<option value="">— choose incoterm —</option>';
+        rows.forEach(row => {
+          const opt = document.createElement('option');
+          opt.value = row.value;
+          const label =
+            row.ids && row.text && row.ids !== row.text
+              ? `${row.ids} – ${row.text}`
+              : (row.text || row.ids || row.value);
+          opt.textContent = label;
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        console.error('Chyba při načítání incoterms', e);
+        sel.innerHTML = '<option value="">— chyba načtení —</option>';
+      }
+    }
+
+    /** Uložená hodnota z DB nemusí být v číselníku → doplníme volbu. */
+    function applyIncotermsSavedValue(savedRaw) {
+      const sel = document.getElementById('incoterms');
+      const v = (savedRaw || '').trim();
+      if (!v) {
+        sel.value = '';
+        return;
+      }
+      for (const o of sel.options) {
+        if (o.value === v) {
+          sel.value = v;
+          return;
+        }
+      }
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v + ' (uloženo)';
+      sel.appendChild(opt);
+      sel.value = v;
+    }
 
     async function loadCustomers() {
       try {
@@ -216,8 +341,15 @@
           select.appendChild(opt);
         });
 
-        select.onchange = () => {
+        select.onchange = async () => {
           selectedCustomerId = select.value;
+          customerAddress = null;
+          if (selectedCustomerId) {
+            try {
+              const adRes = await fetch(`${BOM_API}/CustomerAddress?refAD=${encodeURIComponent(selectedCustomerId)}`);
+              if (adRes.ok) customerAddress = await adRes.json();
+            } catch (e) { console.warn('[CustomerAddress] fetch failed', e); }
+          }
           autosave();
         };
       } catch (e) {
@@ -233,6 +365,7 @@
       const sendBtn = document.getElementById('send-btn');
       const addBtn = document.getElementById('add-item-btn');
       const pdfBtn = document.getElementById('pdf-btn-nav');
+      const reviseBtn = document.getElementById('revise-btn-nav');
       const container = document.querySelector('.container');
 
       if (currentStatus === 'IN PROGRESS') {
@@ -240,6 +373,7 @@
         sendBtn.style.display = 'none';
         addBtn.disabled = false;
         pdfBtn.disabled = true;
+        reviseBtn.style.display = 'none';
         container.classList.remove('readonly');
         isReadOnly = false;
       } 
@@ -248,6 +382,7 @@
         sendBtn.style.display = 'inline-block';
         addBtn.disabled = false;
         pdfBtn.disabled = true;
+        reviseBtn.style.display = 'none';
         container.classList.remove('readonly');
         isReadOnly = false;
       } 
@@ -256,6 +391,7 @@
         sendBtn.style.display = 'none';
         addBtn.disabled = true;
         pdfBtn.disabled = false;
+        reviseBtn.style.display = 'inline-block';
         container.classList.add('readonly');
         isReadOnly = true;
 
@@ -588,6 +724,10 @@
         customerName: selectedCustomerId ? document.getElementById('customer')?.options[document.getElementById('customer').selectedIndex]?.text : '',
         date: document.getElementById('date')?.value || '',
         validUntil: document.getElementById('valid-until')?.value || '',
+        requestDate: document.getElementById('request-date')?.value || '',
+        incoterms: document.getElementById('incoterms')?.value || '',
+        deliveryWeeks: document.getElementById('delivery-weeks')?.value || '',
+        pdfColor: document.getElementById('pdf-color')?.value || '',
         items: items.map(i => ({
           itemId: i.itemId,  // může být negativní pro nové položky
           code: i.code || '',
@@ -658,6 +798,10 @@
         document.getElementById('quote-number').value = quoteNumber;
         document.getElementById('date').value = quote.date || '';
         document.getElementById('valid-until').value = quote.validUntil || '';
+        document.getElementById('request-date').value = quote.requestDate || '';
+        applyIncotermsSavedValue(quote.incoterms || '');
+        document.getElementById('delivery-weeks').value = quote.deliveryWeeks || '';
+        document.getElementById('pdf-color').value = quote.pdfColor || '';
 
         items = quote.items?.map(i => ({
           itemId: i.itemId || 0,
@@ -671,7 +815,13 @@
         })) || [];
 
         const select = document.getElementById('customer');
-        if (selectedCustomerId) select.value = selectedCustomerId;
+        if (selectedCustomerId) {
+          select.value = selectedCustomerId;
+          try {
+            const adRes = await fetch(`${BOM_API}/CustomerAddress?refAD=${encodeURIComponent(selectedCustomerId)}`);
+            if (adRes.ok) customerAddress = await adRes.json();
+          } catch (e) { console.warn('[CustomerAddress] fetch failed on load', e); }
+        }
 
         renderTable();
         updateQuoteStatus();
@@ -805,32 +955,96 @@
       }
     }
 
+    function fmtDate(isoVal) {
+      if (!isoVal) return '';
+      const d = new Date(isoVal);
+      return isNaN(d) ? isoVal : d.toLocaleDateString('cs-CZ');
+    }
+
+    function fmtDimGerman(val) {
+      const n = parseInt(val);
+      return isNaN(n) ? val : n.toLocaleString('de-DE');
+    }
+
     function generatePDF() {
       const offerNr = quoteNumber || document.getElementById('quote-number')?.value || '—';
 
+      // Offer number
       document.getElementById('pdf-offer-number').textContent = offerNr;
       document.getElementById('pdf-offer-number-repeat').textContent = offerNr;
 
-      document.getElementById('pdf-offer-date').textContent = 
-        document.getElementById('date')?.value || new Date().toLocaleDateString('cs-CZ');
+      // Offer date
+      const offerDateRaw = document.getElementById('date')?.value || '';
+      document.getElementById('pdf-offer-date').textContent =
+        offerDateRaw ? fmtDate(offerDateRaw) : new Date().toLocaleDateString('cs-CZ');
 
-      const customerText = document.getElementById('customer')?.selectedOptions[0]?.text || '—';
-      document.getElementById('pdf-customer-block').innerHTML = customerText.replace(/ – /g, '<br>') || 'Žádný zákazník';
+      // Request date
+      const requestDateRaw = document.getElementById('request-date')?.value || '';
+      document.getElementById('pdf-request-date').innerHTML = requestDateRaw
+        ? fmtDate(requestDateRaw)
+        : '<span class="pdf-missing">[Request date not set]</span>';
 
-      document.getElementById('pdf-delivery-block').innerHTML = 
-        (customerText.replace(/ – /g, '<br>') || 'Žádná adresa') + '<br>Germany';
+      // Incoterms
+      const incotermsVal = (document.getElementById('incoterms')?.value || '').trim();
+      document.getElementById('pdf-incoterms').innerHTML = incotermsVal
+        ? incotermsVal
+        : '<span class="pdf-missing">[Incoterms not set]</span>';
 
+      // Delivery terms
+      const deliveryWeeks = (document.getElementById('delivery-weeks')?.value || '').trim();
+      document.getElementById('pdf-delivery-terms').innerHTML = deliveryWeeks
+        ? `${deliveryWeeks} weeks after order confirmation`
+        : '<span class="pdf-missing">[not set]</span>';
+
+      // Customer block
+      const customerSelect = document.getElementById('customer');
+      const customerName = customerSelect?.selectedOptions[0]?.text || '';
+      const noCustomer = !customerName || customerName.startsWith('--');
+
+      function addrBlock(firma, ulice, psc, obec, zemeNazev) {
+        const m = v => v
+          ? `<span>${v}</span>`
+          : `<span class="pdf-missing">[not in system]</span>`;
+        return `<strong>${firma || '<span class="pdf-missing">[No customer]</span>'}</strong><br>
+                ${m(ulice)}<br>
+                ${m(psc && obec ? psc + ' ' + obec : (psc || obec))}<br>
+                ${m(zemeNazev)}`;
+      }
+
+      if (noCustomer) {
+        const noCustomerHtml = '<span class="pdf-missing">[No customer selected]</span>';
+        document.getElementById('pdf-customer-block').innerHTML = noCustomerHtml;
+        document.getElementById('pdf-delivery-block').innerHTML = noCustomerHtml;
+      } else if (customerAddress) {
+        const a = customerAddress;
+        document.getElementById('pdf-customer-block').innerHTML =
+          addrBlock(a.firma, a.ulice, a.psc, a.obec, a.zemeNazev);
+        document.getElementById('pdf-delivery-block').innerHTML =
+          addrBlock(a.firma2 || a.firma, a.ulice2 || a.ulice, a.psc2 || a.psc, a.obec2 || a.obec, a.zeme2Nazev || a.zemeNazev);
+      } else {
+        // Adresa nebyla načtena – zobrazit jméno a červené placeholdery
+        const m = '<span class="pdf-missing">[not in system]</span>';
+        const fallback = `<strong>${customerName}</strong><br>${m}<br>${m}<br>${m}`;
+        document.getElementById('pdf-customer-block').innerHTML = fallback;
+        document.getElementById('pdf-delivery-block').innerHTML = fallback;
+      }
+
+      // Products table
       const tbody = document.getElementById('pdf-products-tbody');
       tbody.innerHTML = '';
 
       if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px; color:#888;">Žádné položky v nabídce</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#888;">No items in this offer</td></tr>';
       } else {
         items.forEach(item => {
-          const product = item.name || item.code || '—';
-          const dimension = item.attributes?.attr2 || '1500–3000';
-          const thickness = item.attributes?.attr6 || '15';
-          const price = item.sellingPrice > 0 ? item.sellingPrice.toFixed(2) : '—';
+          const product   = item.name || item.code || '—';
+          const dimRaw    = item.attributes?.attr5 || '';
+          const thickRaw  = item.attributes?.attr4 || '';
+          const dimension = dimRaw  || '<span class="pdf-missing">[dim N/A]</span>';
+          const thickness = thickRaw || '<span class="pdf-missing">[thick N/A]</span>';
+          const price     = item.sellingPrice > 0
+            ? item.sellingPrice.toFixed(2)
+            : '<span class="pdf-missing">—</span>';
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -843,6 +1057,28 @@
         });
       }
 
+      // Notes section
+      const colorVal = (document.getElementById('pdf-color')?.value || '').trim();
+      let notesHtml = '';
+
+      if (colorVal) {
+        notesHtml += `Angefragte Farbe: ${colorVal}<br><br>`;
+      } else {
+        notesHtml += `Angefragte Farbe: <span class="pdf-missing">[Color not set]</span><br><br>`;
+      }
+
+      notesHtml += 'Mindestbestellmenge: 1.000 kg per Farbe und Maße<br>';
+      items.forEach(item => {
+        const dimParts = (item.attributes?.attr5 || '').split('-');
+        const thick    = item.attributes?.attr4 || '?';
+        if (dimParts.length === 2) {
+          notesHtml += `${fmtDimGerman(dimParts[0])} x ${fmtDimGerman(dimParts[1])} x ${thick} mm<br>`;
+        }
+      });
+
+      document.getElementById('pdf-notes-block').innerHTML = notesHtml;
+
+      // Open print window
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         alert('Prohlížeč zablokoval nové okno. Povolte popup okna.');
@@ -852,10 +1088,29 @@
       printWindow.document.write(`
         <html>
           <head>
-            <title>Cenová nabídka ${offerNr}</title>
+            <title>Offer ${offerNr}</title>
             <style>
-              body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
-              @page { size: A4 portrait; margin: 15mm 15mm 25mm 15mm; }
+              * { box-sizing: border-box; }
+              body { margin: 0; padding: 0 0 22mm 0; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; line-height: 1.4; }
+              @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
+              .pdf-missing { color: #cc0000; font-style: italic; }
+              .pdf-sp-badge { display: inline-block; background: #006400; color: white; font-weight: bold; font-size: 13pt; padding: 2px 7px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+              .pdf-company-name { font-size: 15pt; font-weight: bold; vertical-align: middle; }
+              .pdf-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7mm; padding-bottom: 4mm; border-bottom: 2px solid #333; }
+              .pdf-offer-title { font-size: 13pt; font-weight: bold; }
+              .pdf-section-label { color: #1a5276; font-weight: bold; font-size: 10pt; margin-bottom: 3px; }
+              .pdf-two-columns { display: flex; justify-content: space-between; margin-bottom: 7mm; }
+              .pdf-column { width: 48%; }
+              .pdf-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 9mm; }
+              .pdf-meta-table td { padding: 2px 5px; vertical-align: top; }
+              .pdf-meta-table td:nth-child(1), .pdf-meta-table td:nth-child(3) { font-weight: bold; width: 120px; }
+              .pdf-products-table { width: 100%; border-collapse: collapse; margin-bottom: 9mm; }
+              .pdf-products-table th, .pdf-products-table td { border: 1px solid #999; padding: 5px 8px; }
+              .pdf-products-table th { background: #f0f0f0; text-align: center; font-weight: bold; font-size: 9pt; }
+              .pdf-products-table td:nth-child(2), .pdf-products-table td:nth-child(3) { text-align: center; }
+              .pdf-products-table td:nth-child(4) { text-align: right; }
+              .pdf-notes { font-size: 9pt; margin-top: 7mm; color: #1a5276; line-height: 1.8; }
+              .pdf-footer { position: fixed; bottom: 0; left: 0; right: 0; padding-top: 5px; border-top: 1px solid #ccc; font-size: 8pt; text-align: center; color: #555; background: white; }
             </style>
           </head>
           <body onload="setTimeout(() => { window.print(); }, 800)">
@@ -870,10 +1125,38 @@
       document.getElementById('status').className = 'status status-ok';
     }
 
+    async function reviseQuote() {
+      if (!confirm(`Vytvořit novou revizi nabídky ${quoteNumber}?\nNová revize bude otevřena jako IN PROGRESS.`)) return;
+
+      const btn = document.getElementById('revise-btn-nav');
+      btn.disabled = true;
+      btn.textContent = 'Vytvářím revizi...';
+
+      try {
+        const res = await fetch(`${BOM_API}/quote/${encodeURIComponent(quoteNumber)}/revise`, {
+          method: 'POST'
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        location.href = `quote.html?quote=${encodeURIComponent(data.newQuoteNumber)}`;
+
+      } catch (e) {
+        alert(`Chyba při vytváření revize: ${e.message}`);
+        btn.disabled = false;
+        btn.textContent = '↩ CREATE REVISION';
+      }
+    }
+
     window.onload = async () => {
       const cfg = await fetch('/api/config').then(r => r.json());
       BOM_API = cfg.apiBase;
 
+      await loadIncoterms();
       await loadCustomers();
 
       const loaded = await loadQuoteFromServer();
