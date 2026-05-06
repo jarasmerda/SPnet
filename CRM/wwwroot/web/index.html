@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Video Background + 3 Cards – různé video na mobil / PC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      height: -webkit-fill-available;
+    }
+
+    body {
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: white;
+      background: #000;
+      overscroll-behavior: contain;
+    }
+
+    .video-bg {
+      position: relative;
+      height: 100dvh;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .video-bg video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transform: scale(0.9);
+      transform-origin: center center;
+      z-index: -2;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: -1;
+    }
+
+    main {
+      position: relative;
+      z-index: 2;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 16px) 20px env(safe-area-inset-bottom, 40px);
+      gap: 5vh;
+    }
+
+    .content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    h1 {
+      font-size: 4.2rem;
+      margin-bottom: 1.2rem;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.9);
+    }
+
+    p.intro {
+      font-size: 1.45rem;
+      max-width: 760px;
+      margin: 0 auto 3rem;
+      opacity: 0.95;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+      justify-items: center;
+    }
+
+    .card {
+      background: rgba(30, 30, 50, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 16px;
+      padding: 50px 32px;
+      text-decoration: none;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+
+    .card h2 {
+      font-size: 2.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .card p {
+      font-size: 1.15rem;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    /* ── Desktop/PC: bez scrollu, desktop video ─────────────────────── */
+    @media (min-width: 1025px) {
+      body {
+        overflow: hidden;
+      }
+      main, .video-bg {
+        height: 100dvh;
+      }
+      .cards {
+        padding-bottom: 0;
+      }
+      .video-mobile {
+        display: none;
+      }
+      .video-desktop {
+        display: block;
+      }
+    }
+
+    /* ── Mobil/tablet: scroll povolený, mobilní video ───────────────── */
+    @media (max-width: 1024px) {
+      body {
+        overflow-y: auto;
+      }
+
+      main {
+        justify-content: flex-start;
+        height: auto;
+        min-height: 100dvh;
+        padding-top: env(safe-area-inset-top, 20px);
+        gap: 6vh;
+      }
+
+      .video-bg {
+        height: auto;
+        min-height: 100dvh;
+      }
+
+      .video-desktop {
+        display: none;
+      }
+      .video-mobile {
+        display: block;
+      }
+
+      h1 { font-size: 3.2rem; }
+      p.intro { font-size: 1.3rem; }
+
+      .cards {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        padding-bottom: 160px;           /* prostor pro scroll dolů */
+      }
+
+      .card {
+        max-width: none;
+        min-height: 240px;
+        padding: 48px 30px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 2.6rem; }
+      p.intro { font-size: 1.15rem; }
+      .cards { padding-bottom: 200px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="video-bg">
+
+    <!-- Video pro desktop (PC, široké obrazovky) -->
+    <video class="video-desktop" autoplay muted loop playsinline poster="poster-desktop.jpg">
+      <source src="video-desktop.mp4" type="video/mp4">
+      Váš prohlížeč nepodporuje video.
+    </video>
+
+    <!-- Video pro mobil a tablety -->
+    <video class="video-mobile" autoplay muted loop playsinline poster="poster-mobile.jpg">
+      <source src="video-mobile.mp4" type="video/mp4">
+      Váš prohlížeč nepodporuje video.
+    </video>
+
+    <div class="overlay"></div>
+
+    <main>
+      <div class="content">
+        <h1>Vítejte na našem webu</h1>
+        <p class="intro">Pohybující se pozadí a rychlý přístup k hlavním sekcím.</p>
+      </div>
+
+      <div class="cards">
+        <a href="/company-detail.html" class="card">
+          <h2>COMPANY DETAIL</h2>
+          <p>Poznejte naši historii, tým, hodnoty a poslání.</p>
+        </a>
+
+        <a href="/products.html" class="card">
+          <h2>PRODUCTS</h2>
+          <p>Kompletní přehled našich produktů a služeb.</p>
+        </a>
+
+        <a href="/inquiry.html" class="card">
+          <h2>INQUIRY GENERATOR</h2>
+          <p>Rychle vytvořte poptávku – stačí pár kliků.</p>
+        </a>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>

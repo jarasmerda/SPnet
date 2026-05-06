@@ -1,0 +1,2 @@
+powershell -ExecutionPolicy Bypass -File "C:\Users\Administrator\dotnet\SP_DEV\start-all-dev.ps1"
+
