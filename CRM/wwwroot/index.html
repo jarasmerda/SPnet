@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SHEET QUOTESS</title>
+  <title>SHEET QUOTES</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 40px; }
     .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
@@ -19,6 +19,7 @@
     .filter-group { display: flex; flex-direction: column; min-width: 220px; }
     .filter-group label { margin-bottom: 6px; font-weight: bold; }
     select, button { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+    .filter-group input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; min-width: 220px; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -49,9 +50,10 @@
         <label for="filterStatus">Stav</label>
         <select id="filterStatus" onchange="updateFilters()">
           <option value="">ALL STATUSES</option>
-          <option value="Rozpracovaná">WORKING ON IT</option>
-          <option value="Čeká na schválení">WAITING FOR APPROVAL</option>
-          <option value="Schválená">APPROVED</option>
+          <option value="WORKING ON IT">WORKING ON IT</option>
+          <option value="IN PROGRESS">IN PROGRESS</option>
+          <option value="WAITING FOR APPROVAL">WAITING FOR APPROVAL</option>
+          <option value="APPROVED">APPROVED</option>
         </select>
       </div>
 
@@ -64,9 +66,9 @@
 
       <div class="filter-group">
         <label for="filterNumber">QUOTE #</label>
-        <select id="filterNumber" onchange="updateFilters()">
-          <option value="">ALL QUOTES</option>
-        </select>
+        <input type="text" id="filterNumber" list="quoteNumberList" placeholder="Maska, potvrďte Enter…" autocomplete="off"
+               onkeydown="onQuoteNumberFilterKeydown(event)">
+        <datalist id="quoteNumberList"></datalist>
       </div>
 
       <div class="filter-group">
@@ -92,12 +94,82 @@
   <script>
     let API = '';
     let allQuotes = [];
+    /** Maska čísla nabídky použitá ve filtru až po Enter (ne při psaní). */
+    let committedQuotePattern = '';
+
+    function applyQuoteNumberFilter() {
+      committedQuotePattern = document.getElementById('filterNumber').value.trim();
+      updateFilters();
+    }
+
+    function onQuoteNumberFilterKeydown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        applyQuoteNumberFilter();
+      }
+    }
+
+    /** Escapuje regex pro části mezi * a ? */
+    function escapeRegexChunk(s) {
+      return s.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+    }
+
+    /**
+     * Shoda čísla nabídky s maskou: * = libovolný řetězec, ? = jeden znak (jako u souborů).
+     * Bez * a ? se chová jako přesná shoda.
+     */
+    function quoteNumberMatches(pattern, quoteNum) {
+      const p = (pattern || '').trim();
+      if (!p) return true;
+      const qn = String(quoteNum || '');
+      if (!p.includes('*') && !p.includes('?')) return qn === p;
+      let regexStr;
+      try {
+        regexStr = '^' +
+          p.split('*')
+            .map(seg => seg.split('?').map(escapeRegexChunk).join('.'))
+            .join('.*') +
+          '$';
+        return new RegExp(regexStr, 'i').test(qn);
+      } catch {
+        return false;
+      }
+    }
+
+    function getQuotesFilteredByStatusAndCustomer() {
+      const stat = document.getElementById('filterStatus').value;
+      const cust = document.getElementById('filterCustomer').value;
+      return allQuotes.filter(q => {
+        const status = q.status || '';
+        const customer = q.customerName || '';
+        return (!stat || status === stat) && (!cust || customer === cust);
+      });
+    }
+
+    function refreshQuoteNumberDatalist(quotesSubset) {
+      const dl = document.getElementById('quoteNumberList');
+      dl.innerHTML = '';
+      const nums = [...new Set(quotesSubset.map(q => q.quoteNumber).filter(Boolean))].sort();
+      nums.forEach(n => {
+        const o = document.createElement('option');
+        o.value = n;
+        dl.appendChild(o);
+      });
+    }
 
     async function loadQuotes() {
       try {
         const res = await fetch(`${API}/IndexQuotesList`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        allQuotes = await res.json();
+        const raw = await res.json();
+        // API vrací PascalCase (QuoteNumber, Status, …) — sjednotíme na camelCase
+        allQuotes = raw.map(q => ({
+          quoteNumber:  q.quoteNumber ?? q.QuoteNumber ?? '',
+          status:       q.status ?? q.Status ?? '',
+          customerName: q.customerName ?? q.CustomerName ?? '',
+          created:      q.created ?? q.Created ?? '',
+          lastSaved:    q.lastSaved ?? q.LastSaved ?? ''
+        }));
         resetFilters(); // inicializace + první vykreslení
       } catch (e) {
         console.error(e);
@@ -109,16 +181,15 @@
     function getFilteredQuotes() {
       const stat = document.getElementById('filterStatus').value;
       const cust = document.getElementById('filterCustomer').value;
-      const num  = document.getElementById('filterNumber').value;
 
       return allQuotes.filter(q => {
-        const status   = q.status || 'Rozpracovaná';
+        const status   = q.status || '';
         const customer = q.customerName || '';
         const quoteNum = q.quoteNumber || '';
 
         return (!stat || status === stat) &&
                (!cust || customer === cust) &&
-               (!num  || quoteNum === num);
+               (!committedQuotePattern || quoteNumberMatches(committedQuotePattern, quoteNum));
       });
     }
 
@@ -130,7 +201,7 @@
 
       // 2. Aktualizujeme dropdowny podle aktuálně filtrovaných nabídek
       updateCustomerDropdown(filtered);
-      updateNumberDropdown(filtered);
+      refreshQuoteNumberDatalist(getQuotesFilteredByStatusAndCustomer());
     }
 
     function updateCustomerDropdown(currentFiltered) {
@@ -153,25 +224,6 @@
       });
     }
 
-    function updateNumberDropdown(currentFiltered) {
-      const select = document.getElementById('filterNumber');
-      const currentValue = select.value;
-
-      select.innerHTML = '<option value="">ALL QUOTES</option>';
-
-      const numbers = [...new Set(
-        currentFiltered.map(q => q.quoteNumber).filter(Boolean)
-      )].sort();
-
-      numbers.forEach(n => {
-        const opt = document.createElement('option');
-        opt.value = n;
-        opt.textContent = n;
-        if (n === currentValue) opt.selected = true;
-        select.appendChild(opt);
-      });
-    }
-
     function renderTable(quotes) {
       const tbody = document.querySelector('#quotesTable tbody');
       tbody.innerHTML = '';
@@ -184,10 +236,10 @@
       quotes.forEach(q => {
         const tr = document.createElement('tr');
         let statusClass = 'status-roz';
-        const status = q.status || 'Rozpracovaná';
+        const status = q.status || '';
 
-        if (status === 'Čeká na schválení') statusClass = 'status-cek';
-        if (status === 'Schválená') statusClass = 'status-sch';
+        if (status === 'WAITING FOR APPROVAL') statusClass = 'status-cek';
+        if (status === 'APPROVED') statusClass = 'status-sch';
 
         tr.innerHTML = `
           <td><a href="quote.html?quote=${q.quoteNumber}">${q.quoteNumber || '—'}</a></td>
@@ -205,11 +257,12 @@
       document.getElementById('filterStatus').value = '';
       document.getElementById('filterCustomer').value = '';
       document.getElementById('filterNumber').value = '';
+      committedQuotePattern = '';
 
       const all = allQuotes.slice(); // kopie
       renderTable(all);
       updateCustomerDropdown(all);
-      updateNumberDropdown(all);
+      refreshQuoteNumberDatalist(all);
     }
 
     async function newQuote() {
