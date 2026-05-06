@@ -51,9 +51,7 @@ builder.Services
     {
         options.Cookie.Name = ".AspNetCore.Identity.Application";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.None
-            : CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.ExpireTimeSpan = TimeSpan.FromDays(14);
         options.SlidingExpiration = true;
@@ -63,9 +61,7 @@ builder.Services
     {
         options.Cookie.Name = ".AspNetCore.Identity.Bearer";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.None
-            : CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.ExpireTimeSpan = TimeSpan.FromDays(14);
         options.SlidingExpiration = true;
@@ -231,8 +227,6 @@ app.MapPost("/login", async (SignInManager<IdentityUser> signInManager, UserMana
 // ────────────────────────────────────────────────
 app.UseDefaultFiles();      // vrací index.html pro /
 app.UseStaticFiles();       // wwwroot
-
-app.UseHttpsRedirection();
 
 // ────────────────────────────────────────────────
 // POŘADÍ JE KLÍČOVÉ: UseAuthentication a UseAuthorization MUSÍ BÝT PŘED middlewarem ochrany!
