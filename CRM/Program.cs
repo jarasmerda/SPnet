@@ -73,6 +73,28 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // ────────────────────────────────────────────────
+// Startup seed – zajistí existenci uživatele cs@staroplastic.cz / heslo: cs
+{
+    using var scope = app.Services.CreateScope();
+    var um = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+    if (await um.FindByEmailAsync("cs@staroplastic.cz") == null)
+    {
+        var seedUser = new IdentityUser
+        {
+            UserName       = "cs@staroplastic.cz",
+            Email          = "cs@staroplastic.cz",
+            EmailConfirmed = true
+        };
+        // Hasher přímý – obejde password-policy validátory
+        seedUser.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<IdentityUser>()
+                                    .HashPassword(seedUser, "cs");
+        await um.CreateAsync(seedUser);
+        Console.WriteLine("[SEED] Uživatel cs@staroplastic.cz byl vytvořen.");
+    }
+}
+
+// ────────────────────────────────────────────────
 // Middleware: ochrana index.html a kořenové cesty
 // POŘADÍ: UseAuthentication MUSÍ BÝT PŘED tímto middlewarem!
 app.UseAuthentication();
