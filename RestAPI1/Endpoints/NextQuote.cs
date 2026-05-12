@@ -13,18 +13,18 @@ namespace RestAPI1.Endpoints
             {
                 try
                 {
-                    var lastNumber = await db.Quotes
-                        .Where(q => q.QuoteNumber.StartsWith("Q26"))
-                        .OrderByDescending(q => q.QuoteNumber)
+                    // Revize (Q260063-01) jsou záměrně vyloučeny – jejich suffix -XX
+                    // způsobuje selhání TryParse a vrácení Q260001 místo nového čísla.
+                    var candidates = await db.Quotes
+                        .Where(q => q.QuoteNumber.StartsWith("Q26") && !q.QuoteNumber.Contains("-"))
                         .Select(q => q.QuoteNumber)
-                        .FirstOrDefaultAsync();
+                        .ToListAsync();
 
                     int nextNum = 1;
-                    if (lastNumber != null && lastNumber.StartsWith("Q26"))
+                    foreach (var qn in candidates)
                     {
-                        string numPart = lastNumber.Substring(3);
-                        if (int.TryParse(numPart, out int num))
-                            nextNum = num + 1;
+                        if (qn.Length > 3 && int.TryParse(qn.Substring(3), out int num))
+                            nextNum = Math.Max(nextNum, num + 1);
                     }
 
                     string newNumber = $"Q26{nextNum:D4}";
