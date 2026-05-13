@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLANNING – Výrobní plánování</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
+            color: #1a1a2e;
+        }
+        header {
+            background: #1565c0;
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        header a.portal-link {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.82rem;
+            margin-right: 4px;
+        }
+        header a.portal-link:hover { color: white; }
+        header .sep { color: rgba(255,255,255,0.35); }
+        header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        header span.badge {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+        }
+        main {
+            padding: 40px 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .welcome {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .welcome h2 {
+            color: #1565c0;
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+        }
+        .welcome p {
+            color: #555;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        .modules {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 32px;
+        }
+        .module-card {
+            background: white;
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            border-left: 4px solid #1565c0;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .module-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(21,101,192,0.15);
+        }
+        .module-card h3 {
+            color: #1565c0;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        .module-card p {
+            color: #777;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .status {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a class="portal-link" id="portal-link" href="#">← Portál</a>
+    <span class="sep">|</span>
+    <h1>PLANNING</h1>
+    <span class="badge">Výrobní plánování</span>
+</header>
+
+<main>
+    <div class="welcome">
+        <h2>Vítejte v PLANNING modulu</h2>
+        <p>Plnohodnotný plánovací modul pro řízení výroby, kapacit a termínů dodání.<br>
+           Modul se postupně rozvíjí – níže jsou připraveny sekce pro jednotlivé funkce.</p>
+    </div>
+
+    <div class="modules">
+        <div class="module-card" onclick="location.href='/orders.html'" style="cursor:pointer">
+            <h3>Open Orders</h3>
+            <p>Otevřené objednávky z Pohody – stav, termíny, open qty a KG.</p>
+            <span class="status" style="background:#e8f5e9;color:#2e7d32">Aktivní</span>
+        </div>
+        <div class="module-card">
+            <h3>Výrobní plán</h3>
+            <p>Přehled plánovaných výrobních zakázek a jejich stav.</p>
+            <span class="status">Připravuje se</span>
+        </div>
+        <div class="module-card">
+            <h3>Kapacity</h3>
+            <p>Sledování kapacit strojů a pracovišť v čase.</p>
+            <span class="status">Připravuje se</span>
+        </div>
+        <div class="module-card">
+            <h3>Přehledy</h3>
+            <p>Reporty a analytické pohledy na výrobní data.</p>
+            <span class="status">Připravuje se</span>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Portal odkaz dle prostředí
+    const portalUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:6003'
+        : 'http://' + window.location.hostname;
+    document.getElementById('portal-link').href = portalUrl;
+
+    // Načtení konfigurace API
+    fetch('/api/config')
+        .then(r => r.json())
+        .then(cfg => {
+            window.PLANNING_API = cfg.apiBase || '';
+        })
+        .catch(() => { window.PLANNING_API = ''; });
+</script>
+
+</body>
+</html>

@@ -1,19 +1,17 @@
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using System.Security.Claims;
+using Planning.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionString 'DefaultConnection' není nakonfigurován.");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<PlanningDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // Sdílené Data Protection klíče – stejná složka a ApplicationName ve všech SP projektech
@@ -24,12 +22,10 @@ builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
     .SetApplicationName("SP_INTRANET");
 
-// nutné pro SignInManager a UserManager
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<SignInManager<IdentityUser>>();
 builder.Services.AddScoped<UserManager<IdentityUser>>();
 
-// Identity – základní služby (bez automatických endpointů)
 builder.Services
     .AddIdentityCore<IdentityUser>(options =>
     {
@@ -38,15 +34,13 @@ builder.Services
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
         options.Password.RequireNonAlphanumeric = false;
-
         options.User.RequireUniqueEmail = true;
         options.SignIn.RequireConfirmedAccount = false;
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddEntityFrameworkStores<PlanningDbContext>()
     .AddDefaultTokenProviders();
 
-// autentizace – cookie
 builder.Services
     .AddAuthentication(options =>
     {
@@ -67,19 +61,18 @@ builder.Services
         options.LoginPath = "/login";
     });
 
-// autorizace
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// ────────────────────────────────────────────────
-// Startup seed – zajistí existenci uživatele cs@staroplastic.cz / heslo: cs
+// Startup seed
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<PlanningDbContext>();
 
     // Vytvoří Identity tabulky pokud neexistují.
-    // SqlException 2714 = tabulka již existuje (vytvořil PLANNING) → v pořádku, pokračujeme dál.
+    // Pokud DB již obsahuje jiné tabulky (RestAPI1), EnsureCreated() selže – proto CreateTablesAsync().
+    // SqlException 2714 = tabulka již existuje (vytvořil CRM) → v pořádku, pokračujeme dál.
     var tableExists = await db.Database
         .SqlQuery<int>($"SELECT COUNT(*) AS Value FROM sys.tables WHERE name = 'AspNetUsers'")
         .FirstOrDefaultAsync() > 0;
@@ -92,38 +85,32 @@ var app = builder.Build();
     }
     else
     {
-        Console.WriteLine("[SEED] Identity tabulky již existují (sdílené s PLANNING).");
+        Console.WriteLine("[SEED] Identity tabulky již existují (sdílené s CRM).");
     }
 
     var um = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-
     if (await um.FindByEmailAsync("cs@staroplastic.cz") == null)
     {
         var seedUser = new IdentityUser
         {
-            UserName       = "cs@staroplastic.cz",
-            Email          = "cs@staroplastic.cz",
+            UserName = "cs@staroplastic.cz",
+            Email = "cs@staroplastic.cz",
             EmailConfirmed = true
         };
-        // Hasher přímý – obejde password-policy validátory
         seedUser.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<IdentityUser>()
-                                    .HashPassword(seedUser, "cs");
+            .HashPassword(seedUser, "cs");
         await um.CreateAsync(seedUser);
         Console.WriteLine("[SEED] Uživatel cs@staroplastic.cz byl vytvořen.");
     }
 }
 
-// ────────────────────────────────────────────────
-// Middleware: ochrana index.html a kořenové cesty
-// POŘADÍ: UseAuthentication MUSÍ BÝT PŘED tímto middlewarem!
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Ochrana index.html a kořenové cesty
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value ?? "";
-
-    // chráníme index.html a kořen /
     if (path == "/" || path.EndsWith("/index.html", StringComparison.OrdinalIgnoreCase))
     {
         if (!context.User.Identity?.IsAuthenticated ?? true)
@@ -133,62 +120,55 @@ app.Use(async (context, next) =>
             return;
         }
     }
-
     await next();
 });
 
-// ────────────────────────────────────────────────
-// GET /login – přihlašovací formulář
+// GET /login
 app.MapGet("/login", async (HttpContext ctx) =>
 {
     var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/index.html";
-
     var html = $@"
 <!DOCTYPE html>
 <html lang=""cs"">
 <head>
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Přihlášení do HDPE CRM</title>
+    <title>Přihlášení – PLANNING</title>
     <style>
-        body {{ font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }}
+        body {{ font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }}
         .form-container {{ background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 100%; max-width: 400px; }}
-        h1 {{ color: #d32f2f; text-align: center; margin-bottom: 30px; }}
+        h1 {{ color: #1565c0; text-align: center; margin-bottom: 30px; }}
         label {{ display: block; margin: 10px 0 5px; font-weight: bold; }}
         input {{ width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }}
-        button {{ width: 100%; padding: 14px; background: #d32f2f; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 20px; }}
-        button:hover {{ background: #b71c1c; }}
+        button {{ width: 100%; padding: 14px; background: #1565c0; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 20px; }}
+        button:hover {{ background: #0d47a1; }}
     </style>
 </head>
 <body>
     <div class=""form-container"">
-        <h1>Přihlášení</h1>
+        <h1>PLANNING</h1>
         <form method=""POST"" action=""/login"">
             <input type=""hidden"" name=""returnUrl"" value=""{returnUrl}"" />
             <label for=""email"">Email:</label>
             <input type=""email"" id=""email"" name=""email"" required autofocus />
-
             <label for=""password"">Heslo:</label>
             <input type=""password"" id=""password"" name=""password"" required />
-
             <button type=""submit"">Přihlásit se</button>
         </form>
     </div>
 </body>
 </html>";
-
     ctx.Response.ContentType = "text/html; charset=utf-8";
     await ctx.Response.WriteAsync(html);
 });
 
-// ────────────────────────────────────────────────
-// POST /login – univerzální verze (formulář + JSON)
+// POST /login
 app.MapPost("/login", async (SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager, HttpContext ctx) =>
 {
     try
     {
-        string email = null;
-        string password = null;
+        string? email = null;
+        string? password = null;
         string returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/index.html";
 
         var contentType = ctx.Request.ContentType?.ToLowerInvariant() ?? "";
@@ -196,9 +176,7 @@ app.MapPost("/login", async (SignInManager<IdentityUser> signInManager, UserMana
         if (contentType.Contains("application/json"))
         {
             var json = await ctx.Request.ReadFromJsonAsync<Dictionary<string, string>>();
-            if (json == null)
-                return Results.BadRequest("Neplatný JSON formát");
-
+            if (json == null) return Results.BadRequest("Neplatný JSON formát");
             email = json.GetValueOrDefault("email");
             password = json.GetValueOrDefault("password");
             returnUrl = json.GetValueOrDefault("returnUrl") ?? returnUrl;
@@ -212,88 +190,37 @@ app.MapPost("/login", async (SignInManager<IdentityUser> signInManager, UserMana
         }
 
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-        {
-            ctx.Response.ContentType = "text/html; charset=utf-8";
-            return Results.Content($@"
-                <!DOCTYPE html>
-                <html><body style='text-align:center; padding:50px; font-family:Arial;'>
-                    <h1>Chyba přihlášení</h1>
-                    <p>Email a heslo jsou povinné.</p>
-                    <a href='/login?returnUrl={Uri.EscapeDataString(returnUrl)}'>Zpět na přihlášení</a>
-                </body></html>");
-        }
+            return Results.Content("<html><body><p>Email a heslo jsou povinné.</p><a href='/login'>Zpět</a></body></html>", "text/html; charset=utf-8");
 
         var user = await userManager.FindByEmailAsync(email);
         if (user == null)
-        {
-            ctx.Response.ContentType = "text/html; charset=utf-8";
-            return Results.Content($@"
-                <!DOCTYPE html>
-                <html><body style='text-align:center; padding:50px; font-family:Arial;'>
-                    <h1>Chyba přihlášení</h1>
-                    <p>Neplatný email nebo heslo.</p>
-                    <a href='/login?returnUrl={Uri.EscapeDataString(returnUrl)}'>Zpět na přihlášení</a>
-                </body></html>");
-        }
+            return Results.Content("<html><body><p>Neplatný email nebo heslo.</p><a href='/login'>Zpět</a></body></html>", "text/html; charset=utf-8");
 
         var result = await signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
 
-        if (result.Succeeded)
-        {
-            return Results.Redirect(returnUrl);
-        }
-
-        ctx.Response.ContentType = "text/html; charset=utf-8";
-        return Results.Content($@"
-            <!DOCTYPE html>
-            <html><body style='text-align:center; padding:50px; font-family:Arial;'>
-                <h1>Chyba přihlášení</h1>
-                <p style='color:red;'>Neplatné přihlašovací údaje. Zkuste to znovu.</p>
-                <a href='/login?returnUrl={Uri.EscapeDataString(returnUrl)}'>Zpět na přihlášení</a>
-            </body></html>");
+        return result.Succeeded
+            ? Results.Redirect(returnUrl)
+            : Results.Content("<html><body><p style='color:red'>Neplatné přihlašovací údaje.</p><a href='/login'>Zpět</a></body></html>", "text/html; charset=utf-8");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[LOGIN ERROR] {ex.Message}\n{ex.StackTrace}");
-        ctx.Response.ContentType = "text/html; charset=utf-8";
-        return Results.Content($@"
-            <!DOCTYPE html>
-            <html><body style='text-align:center; padding:50px; font-family:Arial;'>
-                <h1>Interní chyba serveru</h1>
-                <p>Zkuste to později nebo kontaktujte administrátora.</p>
-            </body></html>", statusCode: 500);
+        Console.WriteLine($"[LOGIN ERROR] {ex.Message}");
+        return Results.Content("<html><body><p>Interní chyba serveru.</p></body></html>", "text/html; charset=utf-8", statusCode: 500);
     }
 });
 
-// ────────────────────────────────────────────────
-app.UseDefaultFiles();      // vrací index.html pro /
-app.UseStaticFiles();       // wwwroot
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
-// ────────────────────────────────────────────────
-// POŘADÍ JE KLÍČOVÉ: UseAuthentication a UseAuthorization MUSÍ BÝT PŘED middlewarem ochrany!
-app.UseAuthentication();
-app.UseAuthorization();
+// API endpoints
+app.MapOpenOrders();
 
-// testovací chráněný endpoint
-app.MapGet("/secret", () => "Toto vidí jen přihlášení uživatelé!")
-   .RequireAuthorization();
-
-// příklad dalšího endpointu (volitelné)
-app.MapGet("/api/hello", () => new { message = "Ahoj světe" });
-
-// konfigurace pro frontend – vrátí URL backendu dle prostředí
 app.MapGet("/api/config", (IConfiguration config) => Results.Ok(new
 {
-    apiBase = config["App:RestApi1BaseUrl"] ?? ""
+    apiBase = config["App:PlanningApiBaseUrl"] ?? ""
 }));
 
 app.Run();
 
-// DbContext
-public class ApplicationDbContext : IdentityDbContext<IdentityUser>
-{
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-}
+public class PlanningDbContext(DbContextOptions<PlanningDbContext> options)
+    : IdentityDbContext<IdentityUser>(options);

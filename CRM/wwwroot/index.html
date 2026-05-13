@@ -23,6 +23,9 @@
   </style>
 </head>
 <body>
+  <div style="padding:8px 16px;background:#1565c0;">
+    <a id="portal-link" href="#" style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;font-family:Arial,sans-serif;">← Portál</a>
+  </div>
   <div class="container">
     <h1>SHEET QUOTES</h1>
 
@@ -286,6 +289,10 @@
       API = cfg.apiBase;
       loadQuotes();
     })();
+  </script>
+  <script>
+    document.getElementById('portal-link').href = window.location.hostname === 'localhost'
+      ? 'http://localhost:6003' : 'http://' + window.location.hostname;
   </script>
 </body>
 </html>

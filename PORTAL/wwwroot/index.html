@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SP Intranet – Rozcestník</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0d1b2a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #e8edf5;
+    }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #90b4e8;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 300;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #5a7ea8;
+      margin-bottom: 56px;
+      letter-spacing: 0.05em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      padding: 0 24px;
+    }
+
+    .app-card {
+      background: #162032;
+      border: 1px solid #1e3050;
+      border-radius: 14px;
+      padding: 32px 28px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.18s, border-color 0.18s, background 0.18s;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .app-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 14px 14px 0 0;
+    }
+
+    .app-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      background: #1a2840;
+    }
+
+    .app-card .icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .app-card .name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .app-card .desc {
+      font-size: 0.82rem;
+      color: #5a7ea8;
+      line-height: 1.5;
+    }
+
+    .app-card .badge {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.06);
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+
+    .footer {
+      margin-top: 56px;
+      font-size: 0.75rem;
+      color: #2a4060;
+      letter-spacing: 0.04em;
+    }
+
+    .loading-state { opacity: 0.4; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+  <div class="logo">Staroplastic</div>
+  <h1>SP Intranet</h1>
+  <p class="subtitle">Vyberte modul</p>
+
+  <div class="grid" id="grid">
+    <!-- Karty se generují dynamicky po načtení URL z /api/apps -->
+  </div>
+
+  <div class="footer" id="footer">Načítám konfiguraci…</div>
+
+<script>
+  const APPS_STATIC = [
+    {
+      key: 'crm',
+      name: 'CRM',
+      icon: '🤝',
+      desc: 'Poptávky, nabídky, objednávky a zákazníci.',
+      badge: 'HDPE CRM',
+      accent: '#e53935'
+    },
+    {
+      key: 'planning',
+      name: 'PLANNING',
+      icon: '📋',
+      desc: 'Výrobní plánování, open orders a kapacity.',
+      badge: 'Plánování',
+      accent: '#1565c0'
+    }
+  ];
+
+  async function init() {
+    let urls = {};
+    try {
+      const res = await fetch('/api/apps');
+      urls = await res.json();
+    } catch {
+      document.getElementById('footer').textContent = 'Nepodařilo se načíst konfiguraci.';
+    }
+
+    const grid = document.getElementById('grid');
+    grid.innerHTML = APPS_STATIC.map(app => {
+      const url = urls[app.key] || '#';
+      return `
+        <a class="app-card" href="${url}" style="--accent: ${app.accent}" target="_self">
+          <span class="icon">${app.icon}</span>
+          <div class="name">${app.name}</div>
+          <div class="desc">${app.desc}</div>
+          <span class="badge">${app.badge}</span>
+        </a>`;
+    }).join('');
+
+    document.getElementById('footer').textContent =
+      `SP Intranet · ${new Date().getFullYear()}`;
+  }
+
+  init();
+</script>
+
+</body>
+</html>
