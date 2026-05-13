@@ -10,8 +10,8 @@ $root = $PSScriptRoot
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "
     `$env:ASPNETCORE_ENVIRONMENT = 'Production'
     Set-Location '$root\PORTAL'
-    Write-Host '[PROD] PORTAL spuštěn (port 5000)' -ForegroundColor White
-    dotnet run --no-launch-profile --urls 'http://0.0.0.0:80'
+    Write-Host '[PROD] PORTAL spuštěn (port 8080)' -ForegroundColor White
+    dotnet run --no-launch-profile --urls 'http://0.0.0.0:8080'
 " -WindowStyle Normal
 
 Start-Sleep -Seconds 2
@@ -19,8 +19,8 @@ Start-Sleep -Seconds 2
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "
     `$env:ASPNETCORE_ENVIRONMENT = 'Production'
     Set-Location '$root\CRM'
-    Write-Host '[PROD] CRM spuštěn (port 5127)' -ForegroundColor Yellow
-    dotnet run --no-launch-profile --urls 'http://0.0.0.0:5127'
+    Write-Host '[PROD] CRM spuštěn (port 15127, HTTPS přes IIS:5127)' -ForegroundColor Yellow
+    dotnet run --no-launch-profile --urls 'http://0.0.0.0:15127'
 " -WindowStyle Normal
 
 Start-Sleep -Seconds 2
@@ -37,16 +37,16 @@ Start-Sleep -Seconds 2
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "
     `$env:ASPNETCORE_ENVIRONMENT = 'Production'
     Set-Location '$root\PLANNING'
-    Write-Host '[PROD] PLANNING spuštěn (port 5010)' -ForegroundColor Magenta
-    dotnet run --no-launch-profile --urls 'http://0.0.0.0:5010'
+    Write-Host '[PROD] PLANNING spuštěn (port 15010, HTTPS přes IIS:5010)' -ForegroundColor Magenta
+    dotnet run --no-launch-profile --urls 'http://0.0.0.0:15010'
 " -WindowStyle Normal
 
 Write-Host ""
 Write-Host "=====================================================" -ForegroundColor Yellow
 Write-Host "  PROD prostředí spuštěno (ASPNETCORE_ENVIRONMENT=Production)" -ForegroundColor Yellow
 Write-Host "  Databáze: Smerco_05307970_2025" -ForegroundColor Yellow
-Write-Host "  PORTAL:   http://dotnet.smerco.cz" -ForegroundColor Yellow
-Write-Host "  CRM:      http://dotnet.smerco.cz:5127" -ForegroundColor Yellow
+Write-Host "  PORTAL:   https://dotnet.smerco.cz" -ForegroundColor Yellow
+Write-Host "  CRM:      https://dotnet.smerco.cz:5127" -ForegroundColor Yellow
 Write-Host "  RestAPI1: http://dotnet.smerco.cz:5005" -ForegroundColor Yellow
-Write-Host "  PLANNING: http://dotnet.smerco.cz:5010" -ForegroundColor Yellow
+Write-Host "  PLANNING: https://dotnet.smerco.cz:5010" -ForegroundColor Yellow
 Write-Host "=====================================================" -ForegroundColor Yellow
