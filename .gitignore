@@ -17,5 +17,6 @@ node_modules/
 # Ostatní
 *.log
 *.tmp
+*.db
 Thumbs.db
 .DS_Store

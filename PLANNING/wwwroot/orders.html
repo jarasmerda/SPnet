@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Orders – PLANNING</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #1a1a2e; font-size: 13px; }
+
+    header {
+      background: #1565c0; color: white;
+      padding: 12px 24px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    header a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.85rem; }
+    header a:hover { color: white; }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header .sep { color: rgba(255,255,255,0.4); }
+
+    .toolbar {
+      background: white; padding: 12px 24px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+      border-bottom: 1px solid #dde3ed;
+      position: sticky; top: 0; z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 3px; }
+    .filter-group label { font-size: 0.72rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
+    .filter-group input, .filter-group select {
+      padding: 6px 10px; border: 1px solid #c5cfe0; border-radius: 5px;
+      font-size: 13px; min-width: 140px; background: #f8fafc;
+    }
+    .filter-group input:focus, .filter-group select:focus {
+      outline: none; border-color: #1565c0; background: white;
+    }
+    .btn { padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-primary { background: #1565c0; color: white; }
+    .btn-primary:hover { background: #0d47a1; }
+    .btn-secondary { background: #e8edf5; color: #1565c0; border: 1px solid #c5cfe0; }
+    .btn-secondary:hover { background: #dce4f0; }
+    .btn-export { background: #2e7d32; color: white; }
+    .btn-export:hover { background: #1b5e20; }
+
+    .stats {
+      padding: 8px 24px; display: flex; gap: 24px; font-size: 0.8rem;
+      background: #eef2f8; border-bottom: 1px solid #dde3ed; flex-wrap: wrap;
+    }
+    .stats span { color: #555; }
+    .stats strong { color: #1565c0; }
+
+    .table-wrap { overflow-x: auto; padding: 0 24px 24px; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; background: white;
+            border-radius: 8px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+    thead tr { background: #1565c0; color: white; }
+    th { padding: 9px 10px; text-align: left; font-size: 0.75rem; font-weight: 600;
+         letter-spacing: 0.03em; white-space: nowrap; cursor: pointer; user-select: none; }
+    th:hover { background: #1976d2; }
+    th.sorted-asc::after { content: ' ▲'; font-size: 0.65rem; }
+    th.sorted-desc::after { content: ' ▼'; font-size: 0.65rem; }
+    td { padding: 7px 10px; border-bottom: 1px solid #eef0f4; white-space: nowrap; }
+    tr:hover td { background: #f0f6ff; }
+    tr:last-child td { border-bottom: none; }
+
+    .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; }
+    .badge-open { background: #e3f2fd; color: #1565c0; }
+    .badge-bi { background: #fff3e0; color: #e65100; }
+    .badge-mono { background: #e8f5e9; color: #2e7d32; }
+
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .loading { text-align: center; padding: 60px; color: #888; font-size: 1rem; }
+    .error-msg { text-align: center; padding: 40px; color: #c62828; }
+    .no-data { text-align: center; padding: 40px; color: #888; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/index.html">← PLANNING</a>
+  <span class="sep">|</span>
+  <h1>Open Orders</h1>
+</header>
+
+<div class="toolbar">
+  <div class="filter-group">
+    <label>Zákazník</label>
+    <input type="text" id="f-company" placeholder="Hledat zákazníka…">
+  </div>
+  <div class="filter-group">
+    <label>Kód produktu</label>
+    <input type="text" id="f-code" placeholder="Hledat kód…">
+  </div>
+  <div class="filter-group">
+    <label>Datum od</label>
+    <input type="date" id="f-date-from">
+  </div>
+  <div class="filter-group">
+    <label>Datum do</label>
+    <input type="date" id="f-date-to">
+  </div>
+  <div class="filter-group">
+    <label>Delivery Week</label>
+    <input type="text" id="f-week" placeholder="např. 2025/20">
+  </div>
+  <div class="filter-group">
+    <label>Mono/Bi</label>
+    <select id="f-monobi">
+      <option value="">Vše</option>
+      <option value="MONOCOLOR">MONOCOLOR</option>
+      <option value="BICOLOR">BICOLOR</option>
+    </select>
+  </div>
+  <div class="filter-group" style="justify-content: flex-end">
+    <label>&nbsp;</label>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+      <button class="btn btn-export" onclick="exportCsv()">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="loadData()">↺ Reload</button>
+    </div>
+  </div>
+</div>
+
+<div class="stats" id="stats">
+  <span>Načítám data…</span>
+</div>
+
+<div class="table-wrap">
+  <div id="table-container" class="loading">Načítám otevřené objednávky…</div>
+</div>
+
+<script>
+let allData = [];
+let sortCol = null;
+let sortDir = 1;
+
+const COLS = [
+  { key: 'docNumber',       label: 'Doc Number',      cls: '' },
+  { key: 'company',         label: 'Company',         cls: '' },
+  { key: 'code',            label: 'Code',            cls: '' },
+  { key: 'description',     label: 'Description',     cls: '' },
+  { key: 'deliveryWeek',    label: 'Del. Week',       cls: '' },
+  { key: 'deliveryDate',    label: 'Del. Date',       cls: '' },
+  { key: 'truckDate',       label: 'Truck Date',      cls: '' },
+  { key: 'qty',             label: 'QTY',             cls: 'num' },
+  { key: 'openQty',         label: 'Open QTY',        cls: 'num' },
+  { key: 'uom',             label: 'UOM',             cls: '' },
+  { key: 'kg',              label: 'KG',              cls: 'num' },
+  { key: 'openKg',          label: 'Open KG',         cls: 'num' },
+  { key: 'valueEurCalc',    label: 'Value €',         cls: 'num' },
+  { key: 'country',         label: 'Country',         cls: '' },
+  { key: 'incoterms',       label: 'Incoterms',       cls: '' },
+  { key: 'monoBi',          label: 'Mono/Bi',         cls: '' },
+  { key: 'color',           label: 'Color',           cls: '' },
+  { key: 'customerOrderRef',label: 'Cust. Order',     cls: '' },
+  { key: 'orderNumber',     label: 'Order No.',       cls: '' },
+  { key: 'date',            label: 'Created',         cls: '' },
+];
+
+async function loadData() {
+  document.getElementById('table-container').innerHTML = '<div class="loading">Načítám data z Pohody…</div>';
+  document.getElementById('stats').innerHTML = '<span>Načítám…</span>';
+  try {
+    const res = await fetch('/api/open-orders');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ title: res.statusText, detail: '' }));
+      throw new Error(`${err.title || res.statusText}${err.detail ? ': ' + err.detail : ''}`);
+    }
+    allData = await res.json();
+    applyFilters();
+  } catch (e) {
+    document.getElementById('table-container').innerHTML =
+      `<div class="error-msg">❌ Chyba při načítání: ${e.message}</div>`;
+    document.getElementById('stats').innerHTML = '<span style="color:#c62828">Chyba</span>';
+  }
+}
+
+function applyFilters() {
+  const company  = document.getElementById('f-company').value.trim().toLowerCase();
+  const code     = document.getElementById('f-code').value.trim().toLowerCase();
+  const dateFrom = document.getElementById('f-date-from').value;
+  const dateTo   = document.getElementById('f-date-to').value;
+  const week     = document.getElementById('f-week').value.trim().toLowerCase();
+  const monobi   = document.getElementById('f-monobi').value;
+
+  let filtered = allData.filter(r => {
+    if (company && !r.company?.toLowerCase().includes(company)) return false;
+    if (code    && !r.code?.toLowerCase().includes(code))       return false;
+    if (week    && !r.deliveryWeek?.toLowerCase().includes(week)) return false;
+    if (monobi  && r.monoBi !== monobi)                          return false;
+    if (dateFrom) {
+      const d = r.date ? r.date.substring(0,10) : '';
+      if (d < dateFrom) return false;
+    }
+    if (dateTo) {
+      const d = r.date ? r.date.substring(0,10) : '';
+      if (d > dateTo) return false;
+    }
+    return true;
+  });
+
+  if (sortCol) {
+    filtered.sort((a, b) => {
+      const av = a[sortCol] ?? '';
+      const bv = b[sortCol] ?? '';
+      return av < bv ? -sortDir : av > bv ? sortDir : 0;
+    });
+  }
+
+  renderStats(filtered);
+  renderTable(filtered);
+}
+
+function renderStats(data) {
+  const totalOpenQty = data.reduce((s, r) => s + (r.openQty || 0), 0);
+  const totalOpenKg  = data.reduce((s, r) => s + (r.openKg  || 0), 0);
+  const totalValue   = data.reduce((s, r) => s + (r.valueEurCalc || 0), 0);
+  const companies    = new Set(data.map(r => r.company).filter(Boolean)).size;
+
+  document.getElementById('stats').innerHTML = `
+    <span>Řádků: <strong>${data.length}</strong></span>
+    <span>Zákazníků: <strong>${companies}</strong></span>
+    <span>Open QTY: <strong>${fmt(totalOpenQty)}</strong></span>
+    <span>Open KG: <strong>${fmt(totalOpenKg)}</strong></span>
+    <span>Value €: <strong>${fmt(totalValue, 0)} €</strong></span>
+  `;
+}
+
+function renderTable(data) {
+  if (!data.length) {
+    document.getElementById('table-container').innerHTML = '<div class="no-data">Žádná data neodpovídají filtru.</div>';
+    return;
+  }
+
+  const headers = COLS.map(c => {
+    const cls = sortCol === c.key ? (sortDir === 1 ? 'sorted-asc' : 'sorted-desc') : '';
+    return `<th class="${cls}" onclick="sortBy('${c.key}')">${c.label}</th>`;
+  }).join('');
+
+  const rows = data.map(r => `
+    <tr>
+      <td><strong>${esc(r.docNumber)}</strong></td>
+      <td>${esc(r.company)}</td>
+      <td>${esc(r.code)}</td>
+      <td title="${esc(r.description)}" style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${esc(r.description)}</td>
+      <td>${esc(r.deliveryWeek)}</td>
+      <td>${fmtDate(r.deliveryDate)}</td>
+      <td>${fmtDate(r.truckDate)}</td>
+      <td class="num">${fmt(r.qty)}</td>
+      <td class="num"><strong>${fmt(r.openQty)}</strong></td>
+      <td>${esc(r.uom)}</td>
+      <td class="num">${fmt(r.kg, 1)}</td>
+      <td class="num">${fmt(r.openKg, 1)}</td>
+      <td class="num">${fmt(r.valueEurCalc, 0)} €</td>
+      <td>${esc(r.country)}</td>
+      <td>${esc(r.incoterms)}</td>
+      <td><span class="badge ${r.monoBi === 'BICOLOR' ? 'badge-bi' : 'badge-mono'}">${esc(r.monoBi)}</span></td>
+      <td title="${esc(r.color)}" style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(r.color)}</td>
+      <td>${esc(r.customerOrderRef || r.customerOrderRefNew)}</td>
+      <td>${esc(r.orderNumber)}</td>
+      <td>${fmtDate(r.date)}</td>
+    </tr>`).join('');
+
+  document.getElementById('table-container').innerHTML = `
+    <table>
+      <thead><tr>${headers}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  applyFilters();
+}
+
+function resetFilters() {
+  ['f-company','f-code','f-date-from','f-date-to','f-week'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-monobi').value = '';
+  applyFilters();
+}
+
+function exportCsv() {
+  const company  = document.getElementById('f-company').value.trim().toLowerCase();
+  const code     = document.getElementById('f-code').value.trim().toLowerCase();
+  const monobi   = document.getElementById('f-monobi').value;
+
+  const filtered = allData.filter(r => {
+    if (company && !r.company?.toLowerCase().includes(company)) return false;
+    if (code    && !r.code?.toLowerCase().includes(code))       return false;
+    if (monobi  && r.monoBi !== monobi)                          return false;
+    return true;
+  });
+
+  const header = COLS.map(c => c.label).join(';');
+  const rows = filtered.map(r => [
+    r.docNumber, r.company, r.code, r.description, r.deliveryWeek,
+    fmtDate(r.deliveryDate), fmtDate(r.truckDate),
+    r.qty, r.openQty, r.uom, r.kg?.toFixed(1), r.openKg?.toFixed(1),
+    r.valueEurCalc?.toFixed(0), r.country, r.incoterms, r.monoBi, r.color,
+    r.customerOrderRef || r.customerOrderRefNew, r.orderNumber,
+    fmtDate(r.date)
+  ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';'));
+
+  const csv = '\uFEFF' + [header, ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `open-orders-${new Date().toISOString().substring(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function esc(v) {
+  if (!v) return '';
+  return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmt(v, decimals = 2) {
+  if (v == null || isNaN(v)) return '';
+  return Number(v).toLocaleString('cs-CZ', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function fmtDate(v) {
+  if (!v) return '';
+  return v.substring(0, 10);
+}
+
+// Filtry reagují živě při psaní
+['f-company','f-code','f-date-from','f-date-to','f-week','f-monobi'].forEach(id => {
+  document.getElementById(id).addEventListener('input', applyFilters);
+});
+
+loadData();
+</script>
+</body>
+</html>
