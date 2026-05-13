@@ -18,5 +18,7 @@ node_modules/
 *.log
 *.tmp
 *.db
+*.db-shm
+*.db-wal
 Thumbs.db
 .DS_Store

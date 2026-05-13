@@ -145,7 +145,7 @@
     // Portal odkaz dle prostředí
     const portalUrl = window.location.hostname === 'localhost'
         ? 'http://localhost:6003'
-        : 'http://' + window.location.hostname;
+        : 'https://' + window.location.hostname;
     document.getElementById('portal-link').href = portalUrl;
 
     // Načtení konfigurace API
