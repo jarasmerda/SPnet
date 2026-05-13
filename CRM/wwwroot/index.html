@@ -291,8 +291,9 @@
     })();
   </script>
   <script>
-    document.getElementById('portal-link').href = window.location.hostname === 'localhost'
-      ? 'http://localhost:6003' : 'https://' + window.location.hostname;
+    document.getElementById('portal-link').href = window.location.hostname === 'dotnet.smerco.cz'
+      ? 'https://dotnet.smerco.cz'
+      : 'http://' + window.location.hostname + ':6003';
   </script>
 </body>
 </html>
