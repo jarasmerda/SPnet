@@ -1,0 +1,65 @@
+---
+description: PROD server infrastruktura – IIS, SSL certifikáty, porty, routing
+alwaysApply: true
+---
+
+# PROD Server Infrastruktura (dotnet.smerco.cz)
+
+## Architektura
+
+```
+Internet (HTTPS)  →  IIS (reverse proxy + SSL termination)  →  .NET apps (HTTP, localhost)
+```
+
+IIS běží na `SRV-TERMINAL` (192.168.1.55), spravuje SSL a přeposílá provoz na interní porty.
+
+## Porty a routing
+
+| Veřejná URL (HTTPS) | IIS → interní port | Aplikace |
+|---------------------|--------------------|----------|
+| `https://dotnet.smerco.cz` (443) | → 8080 | PORTAL |
+| `https://dotnet.smerco.cz:5127` | → 15127 | CRM |
+| `https://dotnet.smerco.cz:5010` | → 15010 | PLANNING |
+| `https://dotnet.smerco.cz/restapi/` (443) | → 5005 | RestAPI1 |
+
+## IIS konfigurace
+
+- **Site:** `dotnet.smerco.cz`
+- **Web.config:** `C:\inetpub\dotnet.smerco.cz\web.config`
+- **applicationHost.config:** `C:\Windows\System32\inetsrv\config\applicationHost.config`
+- **Bindingy v applicationHost.config:** `http *:80`, `https *:443`, `https *:5127`, `https *:5010`
+
+## SSL certifikát
+
+- **Thumbprint:** `a4bae2e981b06e7eef5f939387f350fc1e39958f`
+- **Application ID:** `{4dc3e181-e14b-4a21-b022-59fc669b0914}`
+- **Typ:** Let's Encrypt (win-acme), uložen přes HTTP.sys
+- **Nástroj:** `C:\win-acme\wacs.exe`
+
+### SSL cert bindingy (HTTP.sys)
+Po každém `iisreset` se může ztratit binding pro port 5127. Oprava:
+```powershell
+netsh http add sslcert ipport=0.0.0.0:5127 certhash=a4bae2e981b06e7eef5f939387f350fc1e39958f appid='{4dc3e181-e14b-4a21-b022-59fc669b0914}'
+netsh http add sslcert ipport=0.0.0.0:5010 certhash=a4bae2e981b06e7eef5f939387f350fc1e39958f appid='{4dc3e181-e14b-4a21-b022-59fc669b0914}'
+```
+Ověření: `netsh http show sslcert ipport=0.0.0.0:5127`
+
+## Firewall pravidla (Windows Firewall)
+
+Otevřené porty pro příchozí provoz: `443`, `5127`, `5010`, `8080`
+Port `5005` (RestAPI1) není otevřen zvenku – přístupný pouze přes IIS na `/restapi/`.
+
+## Start skript PROD
+
+`C:\Users\Administrator\dotnet\SP_PROD\start-all-prod.ps1`
+- PORTAL: `http://0.0.0.0:8080`
+- CRM: `http://0.0.0.0:15127`
+- PLANNING: `http://0.0.0.0:15010`
+- RestAPI1: `http://0.0.0.0:5005`
+
+## Důležité poznámky
+
+- **IIS není přístupný přes PowerShell modul** (`Get-Website` selže) – používej `appcmd.exe` nebo přímou editaci `applicationHost.config` přes `[xml]`
+- **Duplicitní bindingy** způsobí selhání `iisreset` – vždy zkontroluj před restartem
+- **Port 80** je obsazen TP-Link routerem (admin rozhraní), nelze použít pro .NET
+- **Port 443** spravuje IIS (ne router) – router forwarding: `443 → server:443`

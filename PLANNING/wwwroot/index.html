@@ -143,9 +143,9 @@
 
 <script>
     // Portal odkaz dle prostředí
-    const portalUrl = window.location.hostname === 'localhost'
-        ? 'http://localhost:6003'
-        : 'https://' + window.location.hostname;
+    const portalUrl = window.location.hostname === 'dotnet.smerco.cz'
+        ? 'https://dotnet.smerco.cz'
+        : 'http://' + window.location.hostname + ':6003';
     document.getElementById('portal-link').href = portalUrl;
 
     // Načtení konfigurace API
