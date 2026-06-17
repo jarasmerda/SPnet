@@ -45,8 +45,8 @@ Write-Host ""
 Write-Host "=====================================================" -ForegroundColor Yellow
 Write-Host "  PROD prostředí spuštěno (ASPNETCORE_ENVIRONMENT=Production)" -ForegroundColor Yellow
 Write-Host "  Databáze: Smerco_05307970_2025" -ForegroundColor Yellow
-Write-Host "  PORTAL:   https://dotnet.smerco.cz" -ForegroundColor Yellow
-Write-Host "  CRM:      https://dotnet.smerco.cz:5127" -ForegroundColor Yellow
-Write-Host "  RestAPI1: http://dotnet.smerco.cz:5005" -ForegroundColor Yellow
-Write-Host "  PLANNING: https://dotnet.smerco.cz:5010" -ForegroundColor Yellow
+Write-Host "    PORTAL:   https://dotnet.staroplastic.cz" -ForegroundColor Yellow
+  Write-Host "  CRM:      https://dotnet.staroplastic.cz:5127" -ForegroundColor Yellow
+  Write-Host "  RestAPI1: https://dotnet.staroplastic.cz/restapi" -ForegroundColor Yellow
+  Write-Host "  PLANNING: https://dotnet.staroplastic.cz:5010" -ForegroundColor Yellow
 Write-Host "=====================================================" -ForegroundColor Yellow
